@@ -1,0 +1,128 @@
+#include <pthread.h>
+#include <stdio.h>
+
+pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
+int myCount = 0;
+pthread_cond_t myCond1 = PTHREAD_COND_INITIALIZER;
+pthread_cond_t myCond2 = PTHREAD_COND_INITIALIZER;
+//int iter= 0;
+//int maxiter= 10; 
+int buffersize;
+
+void *consumerThread(void *arg);
+void *producerThread(void *arg);
+/*
+mymutex
+special variable to make sure only one thread can access certain parts of code at a time.
+Can also be used to lock certain areas and parts of code.
+conditio 1 and 2 .
+flags.to show if a condition is met by printing while another is just going to be doing the waiting of the other till  a 
+condition is met.
+show when locking and unlocking of a mutex.
+*/
+int main(){
+    
+printf("PROGRAM START\n");
+pthread_t consumer;
+pthread_t producer;
+pthread_create( &consumer, NULL, consumerThread, NULL );
+printf("CONSUMER THREAD CREATED\n");
+pthread_create( &producer, NULL, producerThread, NULL );
+printf("Producer thread created\n");
+
+
+pthread_join(consumer, NULL);
+pthread_join(producer,NULL);
+printf("PROGRAM END\n");
+return 0;
+}
+
+
+
+// void *consumerThread(void *arg){
+// //pthread_mutex_lock(&myMutex);
+// //printf("CONSUMER THREAD CREATED\n");
+// //int prevcount = -1;
+// printf("Hey\n");
+// while (myCount < 10)
+// {
+// pthread_mutex_lock(&myMutex); // Lock the mutex before checking if the buffer has data
+// printf("CONSUMER: myMutex locked \n");
+// if (myCount ==0) {// Buffer is full; Wait for signal that space is available
+// printf("CONSUMER: waiting for myCond2 \n");
+// pthread_cond_wait(&myCond2, &myMutex);
+// }
+// printf(" myCount %d -> %d \n", myCount, myCount + 1); // Space is free, add an item! This will increment int count
+// printf("myCount %d\n");
+// myCount--;
+// myCount = buffersize;
+// printf("mycount %d\n");
+// printf("CONSUMER: signaling myCond2 \n");
+// pthread_cond_signal(&myCond1); // Signal consumer that the buffer is no longer empty
+
+// pthread_mutex_unlock(&myMutex); // Unlock the mutex
+// printf("CONSUMER: myMutexunlocked \n");
+// //pthread_cond_signal(&myCond1); // Signal consumer that the buffer is no longer empty
+// }
+// return NULL;
+// }
+
+void *consumerThread(void *arg){
+//pthread_mutex_lock(&myMutex);
+//printf("CONSUMER THREAD CREATED\n");
+int prevcount = -1;
+printf("Hey\n");
+while (myCount < 10)
+{
+pthread_mutex_lock(&myMutex); // Lock the mutex before checking if the buffer has data
+printf("CONSUMER: myMutex locked \n");
+if (myCount ==0) {// Buffer is full; Wait for signal that space is available
+printf("CONSUMER: waiting for myCond2 \n");
+pthread_cond_wait(&myCond2, &myMutex);
+}
+// if (myCount != prevcount){
+// printf("Consumer:myCount %d -> %d \n", prevcount, myCount); // Space is free, add an item! This will increment int count
+// printf("myCount %d\n");
+// prevcount = myCount;
+// myCount = buffersize;
+// printf("mycount %d\n");
+// myCount--;
+// }
+myCount--;
+//myCount = buffersize;
+printf("CONSUMER: signaling myCond2 \n");
+pthread_cond_signal(&myCond1); // Signal consumer that the buffer is no longer empty
+
+pthread_mutex_unlock(&myMutex); // Unlock the mutex
+printf("CONSUMER: myMutexunlocked \n");
+//pthread_cond_signal(&myCond1); // Signal consumer that the buffer is no longer empty
+}
+return NULL;
+}
+
+void *producerThread(void *arg){ 
+//pthread_mutex_lock(&myMutex);
+//printf("CONSUMER THREAD CREATED\n");
+while (myCount < 10)
+{
+    pthread_mutex_lock(&myMutex);
+    printf("Producer mutex locked\n");
+if(myCount == 10){ // Buffer is full; Wait for signal that space is available
+printf("PRODUCER: waiting  for myCond1 \n");
+pthread_cond_wait(&myCond1, &myMutex);
+}
+printf("PRODUCER: myCount %d -> %d \n", myCount, myCount + 1); // Space is free, add an item! This will increment int count
+//printf("myCount %d\n");
+myCount++;
+buffersize = myCount;
+printf("myCount %d\n");
+printf("PRODUCER: signaling my Cond1\n");
+pthread_cond_signal(&myCond2); // Signal consumer that the buffer is no longer empty
+
+pthread_mutex_unlock(&myMutex); // Unlock the mutex
+printf("PRODUCER: MyMutex unlocked \n");
+//pthread_cond_signal(&myCond2); // Signal consumer that the buffer is no longer empty
+}
+return NULL;
+}
+
